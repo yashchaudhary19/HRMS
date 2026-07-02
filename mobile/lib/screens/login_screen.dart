@@ -77,7 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 16),
               
               Text(
-                'HR Connect',
+                'NodeHR',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   fontSize: 30,
                   fontWeight: FontWeight.w700,

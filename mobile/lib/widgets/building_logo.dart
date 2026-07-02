@@ -7,21 +7,13 @@ class BuildingLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: const Color(0xff1e293b), // Dark slate blue background
-        borderRadius: BorderRadius.circular(size * 0.25),
-      ),
-      child: Center(
-        child: SizedBox(
-          width: size * 0.5,
-          height: size * 0.5,
-          child: CustomPaint(
-            painter: _BuildingPainter(),
-          ),
-        ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.2),
+      child: Image.asset(
+        'assets/images/logo.png',
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
       ),
     );
   }

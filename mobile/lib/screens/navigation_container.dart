@@ -53,7 +53,7 @@ class _NavigationContainerState extends ConsumerState<NavigationContainer> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('Logout', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-        content: const Text('Are you sure you want to sign out from HR Connect?'),
+        content: const Text('Are you sure you want to sign out from NodeHR?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -113,7 +113,7 @@ class _NavigationContainerState extends ConsumerState<NavigationContainer> {
             ),
             const SizedBox(width: 12),
             Text(
-              'HR Connect',
+              'NodeHR',
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
