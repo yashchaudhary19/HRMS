@@ -440,6 +440,40 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
             ),
             const SizedBox(height: 12),
 
+            // Shift Schedule card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule_rounded, color: AppTheme.primary, size: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Assigned Work Shift',
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBankDetailsRow('Shift Name', user?.shiftName ?? 'Fixed Day Shift'),
+                  const Divider(color: AppTheme.border, height: 20),
+                  _buildBankDetailsRow('Weekly Schedule', user?.shiftSchedule ?? 'Mon-Fri 09:00-17:00'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // Bank Details card
             Container(
               padding: const EdgeInsets.all(16),

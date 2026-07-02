@@ -13,6 +13,8 @@ class Employee {
   final String? bankAccountNo;
   final double? salaryAmount;
   final String? emergencyContact;
+  final String? shiftName;
+  final String? shiftSchedule;
 
   Employee({
     required this.id,
@@ -29,6 +31,8 @@ class Employee {
     this.bankAccountNo,
     this.salaryAmount,
     this.emergencyContact,
+    this.shiftName,
+    this.shiftSchedule,
   });
 
   String get fullName => '$firstName $lastName';
@@ -51,6 +55,8 @@ class Employee {
           ? double.tryParse(json['salary_amount'].toString())
           : null,
       emergencyContact: json['emergency_contact'],
+      shiftName: json['shift_name'],
+      shiftSchedule: json['shift_schedule'],
     );
   }
 
@@ -70,6 +76,8 @@ class Employee {
       'bank_account_no': bankAccountNo,
       'salary_amount': salaryAmount,
       'emergency_contact': emergencyContact,
+      'shift_name': shiftName,
+      'shift_schedule': shiftSchedule,
     };
   }
 
@@ -80,6 +88,8 @@ class Employee {
     String? bankName,
     String? bankAccountNo,
     String? emergencyContact,
+    String? shiftName,
+    String? shiftSchedule,
   }) {
     return Employee(
       id: id,
@@ -96,6 +106,8 @@ class Employee {
       bankAccountNo: bankAccountNo ?? this.bankAccountNo,
       salaryAmount: salaryAmount,
       emergencyContact: emergencyContact ?? this.emergencyContact,
+      shiftName: shiftName ?? this.shiftName,
+      shiftSchedule: shiftSchedule ?? this.shiftSchedule,
     );
   }
 }

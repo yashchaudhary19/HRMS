@@ -178,6 +178,10 @@ class EmployeeBase(BaseModel):
     wfh_leaves_entitled: Optional[int] = 30
     earned_leaves_entitled: Optional[int] = 12
 
+    # Shift scheduling
+    shift_name: Optional[str] = "Fixed Day Shift"
+    shift_schedule: Optional[str] = "Mon-Fri 09:00-17:00"
+
 
 class EmployeeCreate(EmployeeBase):
     password: str
@@ -203,6 +207,10 @@ class EmployeeUpdate(BaseModel):
     sick_leaves_entitled: Optional[int] = None
     wfh_leaves_entitled: Optional[int] = None
     earned_leaves_entitled: Optional[int] = None
+
+    # Shift scheduling
+    shift_name: Optional[str] = None
+    shift_schedule: Optional[str] = None
 
 
 class EmployeeOut(EmployeeBase):

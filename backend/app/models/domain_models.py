@@ -72,6 +72,10 @@ class Employee(Base):
     # Once set, only this device can mark attendance for this employee
     registered_device_id = Column(String(255), nullable=True)
 
+    # Shift scheduling details
+    shift_name = Column(String(100), default="Fixed Day Shift", server_default="'Fixed Day Shift'")
+    shift_schedule = Column(String(255), default="Mon-Fri 09:00-17:00", server_default="'Mon-Fri 09:00-17:00'")
+
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     company = relationship("Company", backref="employees")

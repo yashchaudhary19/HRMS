@@ -61,7 +61,12 @@ def startup_event():
     """
     try:
         Base.metadata.create_all(bind=engine)
-        print("[DB] Database tables verified/created.")
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS shift_name VARCHAR(100) DEFAULT 'Fixed Day Shift'"))
+            conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS shift_schedule VARCHAR(255) DEFAULT 'Mon-Fri 09:00-17:00'"))
+            conn.commit()
+        print("[DB] Database tables verified/created and shift columns verified.")
 
         db = SessionLocal()
         try:

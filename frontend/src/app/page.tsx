@@ -24,6 +24,8 @@ interface Employee {
   sick_leaves_entitled?: number;
   wfh_leaves_entitled?: number;
   earned_leaves_entitled?: number;
+  shift_name?: string;
+  shift_schedule?: string;
   created_at: string;
 }
 
@@ -295,12 +297,12 @@ export default function DashboardPage() {
           setPendingLeaves(pending);
           setAllLeaves(pending); // fallback
 
-          // Setup initial mock shift assignments
+          // Setup real shift assignments from database
           const initialShifts = empList.map((emp: Employee) => ({
             employeeId: emp.id,
             employeeName: `${emp.first_name} ${emp.last_name}`,
-            shiftType: ["super_admin", "admin"].includes(emp.role) ? "fixed_day" : "rotational",
-            schedule: ["super_admin", "admin"].includes(emp.role) ? "Mon-Fri 9AM-5PM" : "Rotational Shift"
+            shiftType: emp.shift_name || "Fixed Day Shift",
+            schedule: emp.shift_schedule || "Mon-Fri 09:00-17:00"
           }));
           setShiftAssignments(initialShifts);
         }
@@ -595,7 +597,7 @@ export default function DashboardPage() {
     }, 1500);
   };
 
-  const handleAssignShift = (e: React.FormEvent) => {
+  const handleAssignShift = async (e: React.FormEvent) => {
     e.preventDefault();
     const emp = allEmployees.find(e => e.id === parseInt(assignShiftForm.employee_id));
     if (!emp) return;
@@ -614,18 +616,29 @@ export default function DashboardPage() {
       schedule = "Mon-Fri 10PM-6AM";
     }
 
-    setShiftAssignments(prev => prev.map(s => {
-      if (s.employeeId === emp.id) {
-        return {
-          ...s,
-          shiftType: shiftType,
-          schedule: schedule
-        };
-      }
-      return s;
-    }));
+    try {
+      const updatedEmp = await api.employees.update(emp.id, {
+        shift_name: shiftType,
+        shift_schedule: schedule
+      });
 
-    setShowAssignShiftModal(false);
+      setAllEmployees(prev => prev.map(e => e.id === emp.id ? updatedEmp : e));
+
+      setShiftAssignments(prev => prev.map(s => {
+        if (s.employeeId === emp.id) {
+          return {
+            ...s,
+            shiftType: shiftType,
+            schedule: schedule
+          };
+        }
+        return s;
+      }));
+
+      setShowAssignShiftModal(false);
+    } catch (err: any) {
+      alert("Failed to update shift in backend: " + err.message);
+    }
   };
 
   // Org Settings Actions
