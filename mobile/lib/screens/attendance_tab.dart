@@ -63,13 +63,17 @@ class _AttendanceTabState extends ConsumerState<AttendanceTab> with SingleTicker
   }
 
   Future<void> _handlePunchAction(bool isWfh) async {
-    // If it's an Office punch, verify location services and permissions actively
-    if (!isWfh) {
-      final hasLocation = await ref.read(attendanceProvider.notifier).ensureLocationEnabledAndPermitted();
-      if (!hasLocation) {
-        return; // stop execution, notifier handles redirection
-      }
+    final state = ref.read(attendanceProvider);
+    final isCheckingOut = state.todayAttendance != null && state.todayAttendance!.checkOut == null;
 
+    // Enforce that location services and permissions are active for all check-in and check-out actions
+    final hasLocation = await ref.read(attendanceProvider.notifier).ensureLocationEnabledAndPermitted();
+    if (!hasLocation) {
+      return; // stop execution, notifier handles redirection
+    }
+
+    // Only enforce geofence for Office check-in (not checkout, and not WFH)
+    if (!isWfh && !isCheckingOut) {
       // Recheck local geofence after active check
       final updatedState = ref.read(attendanceProvider);
       if (!updatedState.geofenceWithinRange) {
@@ -86,8 +90,7 @@ class _AttendanceTabState extends ConsumerState<AttendanceTab> with SingleTicker
       }
     }
 
-    final state = ref.read(attendanceProvider);
-    final isCheckedIn = state.todayAttendance != null;
+    final isCheckedIn = state.todayAttendance != null && state.todayAttendance!.checkOut == null;
 
     showDialog(
       context: context,
@@ -194,7 +197,8 @@ class _AttendanceTabState extends ConsumerState<AttendanceTab> with SingleTicker
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(attendanceProvider);
-    final isCheckedIn = state.todayAttendance != null;
+    final hasCheckedOutToday = state.todayAttendance != null && state.todayAttendance!.checkOut != null;
+    final isCheckedIn = state.todayAttendance != null && state.todayAttendance!.checkOut == null;
     final isWfh = state.isWfhActive;
     final isLocationOff = state.location.contains('GPS Disabled') ||
         state.location.contains('Permission Denied') ||
@@ -725,142 +729,150 @@ class _AttendanceTabState extends ConsumerState<AttendanceTab> with SingleTicker
           ),
           const SizedBox(height: 24),
 
-          // Sliding Selector TabBar
-          Container(
-            height: 48,
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: const Color(0xfff1f5f9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+          if (hasCheckedOutToday) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+              decoration: BoxDecoration(
+                color: AppTheme.success.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppTheme.success.withOpacity(0.2)),
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Workday Completed!',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'You have successfully checked out today.\nHave a great evening!',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppTheme.textSecondary,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: AppTheme.primary,
-              unselectedLabelColor: AppTheme.textSecondary,
-              labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14),
-              unselectedLabelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w500, fontSize: 14),
-              tabs: const [
-                Tab(text: 'Office Punch'),
-                Tab(text: 'Work From Home'),
-              ],
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
+          ] else ...[
+            // Sliding Selector TabBar
+            Container(
+              height: 48,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xfff1f5f9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: AppTheme.primary,
+                unselectedLabelColor: AppTheme.textSecondary,
+                labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14),
+                unselectedLabelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w500, fontSize: 14),
+                tabs: const [
+                  Tab(text: 'Office Punch'),
+                  Tab(text: 'Work From Home'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
 
-          // Tab Bar View content
-          SizedBox(
-            height: 520,
-            child: TabBarView(
-              controller: _tabController,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                // Tab 1: Office check-in panel
-                SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildStatusCard(
-                              icon: Icons.wifi,
-                              title: 'Office Wi-Fi',
-                              value: state.wifiConnected ? 'Connected' : 'Disconnected',
-                              isActive: state.wifiConnected,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildStatusCard(
-                              icon: Icons.location_on_outlined,
-                              title: 'Geofence',
-                              value: state.geofenceWithinRange ? 'Within Range' : 'Out of Range',
-                              isActive: state.geofenceWithinRange,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppTheme.border),
-                        ),
-                        child: Column(
+            // Tab Bar View content
+            SizedBox(
+              height: 520,
+              child: TabBarView(
+                controller: _tabController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  // Tab 1: Office check-in panel
+                  SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Row(
                           children: [
-                            _buildDetailsRow(Icons.router_outlined, 'SSID', state.ssid),
-                            const Divider(color: AppTheme.border, height: 20),
-                            _buildDetailsRow(Icons.language_rounded, 'IP Address', state.ipAddress),
-                            const Divider(color: AppTheme.border, height: 20),
-                            _buildDetailsRow(Icons.map_outlined, 'Location', state.location),
+                            Expanded(
+                              child: _buildStatusCard(
+                                icon: Icons.wifi,
+                                title: 'Office Wi-Fi',
+                                value: state.wifiConnected ? 'Connected' : 'Disconnected',
+                                isActive: state.wifiConnected,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildStatusCard(
+                                icon: Icons.location_on_outlined,
+                                title: 'GPS Location',
+                                value: state.isWithinRange ? 'In Range' : 'Out of Range',
+                                isActive: state.isWithinRange,
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: state.isLoading ? null : () => _handlePunchAction(false),
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
+                        const SizedBox(height: 20),
+
+                        // WiFi parameters card
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppTheme.border),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          child: Column(
                             children: [
-                              const Icon(Icons.fingerprint_rounded, size: 24, color: Colors.white),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Office Check-In',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              _buildDetailsRow(Icons.wifi_rounded, 'SSID', state.ssid),
+                              const Divider(color: AppTheme.border, height: 20),
+                              _buildDetailsRow(Icons.language_rounded, 'IP Address', state.ipAddress),
                             ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                        const SizedBox(height: 24),
 
-                // Tab 2: Work From Home check-in panel
-                SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppTheme.border),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                        // Punch button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 58,
+                          child: ElevatedButton(
+                            onPressed: (state.isLoading || !state.wifiConnected || !state.isWithinRange)
+                                ? null
+                                : () => _handlePunchAction(false),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 2,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.home_work_rounded, color: AppTheme.primary, size: 24),
+                                const Icon(Icons.fingerprint_rounded, size: 24, color: Colors.white),
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Remote Work Mode',
+                                  'Check-In',
                                   style: GoogleFonts.outfit(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
