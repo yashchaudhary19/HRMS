@@ -9,7 +9,7 @@ const getApiBaseUrl = () => {
       return `http://${hostname}:8000/api/v1`;
     }
   }
-  return "http://127.0.0.1:8000/api/v1";
+  return "https://hrms-lg07.onrender.com/api/v1";
 };
 
 const API_BASE_URL = getApiBaseUrl();

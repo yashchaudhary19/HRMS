@@ -6,7 +6,7 @@ class DioClient {
   static const String _tokenKey = 'auth_token';
   
   final Dio _dio = Dio();
-  String _baseUrl = 'http://127.0.0.1:8000/api/v1';
+  String _baseUrl = 'https://hrms-lg07.onrender.com/api/v1';
 
   static final DioClient _instance = DioClient._internal();
   factory DioClient() => _instance;
@@ -47,7 +47,7 @@ class DioClient {
           } else if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.sendTimeout) {
             errorMessage = 'Connection timeout. Check your network or server status.';
           } else if (e.type == DioExceptionType.connectionError) {
-            errorMessage = 'Cannot connect to backend server. Ensure it is running on 127.0.0.1:8000.';
+            errorMessage = 'Cannot connect to backend server. Ensure it is running on https://hrms-lg07.onrender.com.';
           }
           
           return handler.next(
@@ -68,8 +68,8 @@ class DioClient {
   Future<void> _loadBaseUrl() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_baseUrlKey); // Force clear the old saved base URL
-    _baseUrl = 'http://127.0.0.1:8000/api/v1';
-    _dio.options.baseUrl = 'http://127.0.0.1:8000/api/v1';
+    _baseUrl = 'https://hrms-lg07.onrender.com/api/v1';
+    _dio.options.baseUrl = 'https://hrms-lg07.onrender.com/api/v1';
   }
 
   Future<void> updateBaseUrl(String newUrl) async {
