@@ -1,4 +1,4 @@
-package com.hrconnect.hrconnect
+package com.nodehr.app
 
 import io.flutter.embedding.android.FlutterActivity
 
