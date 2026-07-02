@@ -200,7 +200,11 @@ export default function DashboardPage() {
   const [showAssignShiftModal, setShowAssignShiftModal] = useState(false);
   const [assignShiftForm, setAssignShiftForm] = useState({
     employee_id: "",
-    shift_type: "fixed_day"
+    shift_type: "custom",
+    custom_name: "General Shift",
+    start_time: "09:00",
+    end_time: "17:00",
+    working_days: "Mon-Fri"
   });
 
   // Local state for Payroll Integration (Real)
@@ -596,16 +600,26 @@ export default function DashboardPage() {
     const emp = allEmployees.find(e => e.id === parseInt(assignShiftForm.employee_id));
     if (!emp) return;
 
-    let schedule = "Mon-Fri 9AM-5PM";
-    if (assignShiftForm.shift_type === "rotational") schedule = "Rotational Shift (Flexible)";
-    if (assignShiftForm.shift_type === "night") schedule = "Mon-Fri 10PM-6AM";
+    let schedule = `${assignShiftForm.working_days} ${assignShiftForm.start_time}-${assignShiftForm.end_time}`;
+    let shiftType = assignShiftForm.custom_name;
+
+    if (assignShiftForm.shift_type === "fixed_day") {
+      shiftType = "Fixed Day Shift";
+      schedule = "Mon-Fri 9AM-5PM";
+    } else if (assignShiftForm.shift_type === "rotational") {
+      shiftType = "Rotational Shift";
+      schedule = "Rotational (Flexible)";
+    } else if (assignShiftForm.shift_type === "night") {
+      shiftType = "Night Shift";
+      schedule = "Mon-Fri 10PM-6AM";
+    }
 
     setShiftAssignments(prev => prev.map(s => {
       if (s.employeeId === emp.id) {
         return {
           ...s,
-          shiftType: assignShiftForm.shift_type,
-          schedule
+          shiftType: shiftType,
+          schedule: schedule
         };
       }
       return s;
@@ -3880,20 +3894,103 @@ export default function DashboardPage() {
                 <label className="block text-[10px] font-bold uppercase text-brand-muted mb-1">Roster Shift Type</label>
                 <select
                   value={assignShiftForm.shift_type}
-                  onChange={(e) => setAssignShiftForm(p => ({ ...p, shift_type: e.target.value }))}
+                  onChange={(e) => {
+                    const type = e.target.value;
+                    let customName = "General Shift";
+                    let start = "09:00";
+                    let end = "17:00";
+                    let days = "Mon-Fri";
+
+                    if (type === "fixed_day") {
+                      customName = "Fixed Day Shift";
+                      start = "09:00";
+                      end = "17:00";
+                    } else if (type === "night") {
+                      customName = "Night Shift";
+                      start = "22:00";
+                      end = "06:00";
+                    } else if (type === "rotational") {
+                      customName = "Rotational Shift";
+                      start = "Flexible";
+                      end = "Flexible";
+                    }
+
+                    setAssignShiftForm(p => ({
+                      ...p,
+                      shift_type: type,
+                      custom_name: customName,
+                      start_time: start,
+                      end_time: end,
+                      working_days: days
+                    }));
+                  }}
                   className="w-full rounded-xl border border-brand-border bg-brand-sidebar/55 px-3.5 py-2.5 text-brand-text outline-none focus:border-brand-primary/60"
                 >
+                  <option value="custom">Custom Shift (Define Below)</option>
                   <option value="fixed_day">Fixed Day Shift (9AM - 5PM)</option>
                   <option value="rotational">Rotational Hours</option>
                   <option value="night">Night shift (10PM - 6AM)</option>
                 </select>
               </div>
 
+              {assignShiftForm.shift_type === "custom" && (
+                <>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-brand-muted mb-1">Custom Shift Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={assignShiftForm.custom_name}
+                      onChange={(e) => setAssignShiftForm(p => ({ ...p, custom_name: e.target.value }))}
+                      placeholder="e.g. Morning Roster, Evening Shift"
+                      className="w-full rounded-xl border border-brand-border bg-brand-sidebar/55 px-3.5 py-2.5 text-brand-text outline-none focus:border-brand-primary/60"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-brand-muted mb-1">Start Time</label>
+                      <input
+                        type="text"
+                        required
+                        value={assignShiftForm.start_time}
+                        onChange={(e) => setAssignShiftForm(p => ({ ...p, start_time: e.target.value }))}
+                        placeholder="e.g. 09:00, 08:30 AM"
+                        className="w-full rounded-xl border border-brand-border bg-brand-sidebar/55 px-3.5 py-2.5 text-brand-text outline-none focus:border-brand-primary/60"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-brand-muted mb-1">End Time</label>
+                      <input
+                        type="text"
+                        required
+                        value={assignShiftForm.end_time}
+                        onChange={(e) => setAssignShiftForm(p => ({ ...p, end_time: e.target.value }))}
+                        placeholder="e.g. 17:00, 05:30 PM"
+                        className="w-full rounded-xl border border-brand-border bg-brand-sidebar/55 px-3.5 py-2.5 text-brand-text outline-none focus:border-brand-primary/60"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-brand-muted mb-1">Working Days</label>
+                    <input
+                      type="text"
+                      required
+                      value={assignShiftForm.working_days}
+                      onChange={(e) => setAssignShiftForm(p => ({ ...p, working_days: e.target.value }))}
+                      placeholder="e.g. Mon-Fri, Mon-Sat"
+                      className="w-full rounded-xl border border-brand-border bg-brand-sidebar/55 px-3.5 py-2.5 text-brand-text outline-none focus:border-brand-primary/60"
+                    />
+                  </div>
+                </>
+              )}
+
               <button
                 type="submit"
                 className="w-full rounded-xl bg-gradient-to-r from-brand-success to-brand-success/80 py-3 text-xs font-bold text-white shadow-lg shadow-brand-success/20 hover:shadow-brand-success/30 transition-all hover:scale-[1.01] active:scale-[0.99]"
               >
-                Assign Shift timing
+                Assign Shift Timing
               </button>
             </form>
           </div>
