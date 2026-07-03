@@ -825,8 +825,8 @@ class _AttendanceTabState extends ConsumerState<AttendanceTab> with SingleTicker
                               child: _buildStatusCard(
                                 icon: Icons.location_on_outlined,
                                 title: 'GPS Location',
-                                value: state.isWithinRange ? 'In Range' : 'Out of Range',
-                                isActive: state.isWithinRange,
+                                value: state.geofenceWithinRange ? 'In Range' : 'Out of Range',
+                                isActive: state.geofenceWithinRange,
                               ),
                             ),
                           ],
@@ -856,7 +856,7 @@ class _AttendanceTabState extends ConsumerState<AttendanceTab> with SingleTicker
                           width: double.infinity,
                           height: 58,
                           child: ElevatedButton(
-                            onPressed: (state.isLoading || !state.wifiConnected || !state.isWithinRange)
+                            onPressed: (state.isLoading || !state.wifiConnected || !state.geofenceWithinRange)
                                 ? null
                                 : () => _handlePunchAction(false),
                             style: ElevatedButton.styleFrom(
@@ -876,92 +876,113 @@ class _AttendanceTabState extends ConsumerState<AttendanceTab> with SingleTicker
                                   style: GoogleFonts.outfit(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: AppTheme.textDark,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Checking in from home will start a remote session timer. Your location updates will be tracked periodically to verify working parameters. Ensure you submit task updates and a daily progress summary before checking out.',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                color: AppTheme.textSecondary,
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            _buildDetailsRow(Icons.network_ping, 'Connection Type', 'Remote / Internet'),
-                            const Divider(color: AppTheme.border, height: 20),
-                            _buildDetailsRow(Icons.gps_fixed, 'Background GPS', 'Active (Configured)'),
-                            const Divider(color: AppTheme.border, height: 20),
-                            _buildDetailsRow(Icons.timer_outlined, 'Session limit', '8 Hours Shift'),
-                          ],
-                        ),
-                      ),
-                      if (isLocationOff) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppTheme.error.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.error.withOpacity(0.3)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.warning_amber_rounded, color: AppTheme.error),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Location tracking is turned off! Please enable GPS and allow location permissions for accurate WFH logging.',
-                                  style: GoogleFonts.inter(
-                                    color: AppTheme.error,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                       ],
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: state.isLoading ? null : () => _handlePunchAction(true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
+                    ),
+                  ),
+
+                  // Tab 2: Work From Home check-in panel
+                  SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Text(
+                          'Checking in from home will start a remote session timer. Your location updates will be tracked periodically to verify working parameters. Ensure you submit task updates and a daily progress summary before checking out.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppTheme.textSecondary,
+                            height: 1.5,
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        ),
+                        const SizedBox(height: 20),
+
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppTheme.border),
+                          ),
+                          child: Column(
                             children: [
-                              const Icon(Icons.home_work_rounded, size: 24, color: Colors.white),
-                              const SizedBox(width: 12),
-                              Text(
-                                'WFH Check-In',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              _buildDetailsRow(Icons.network_ping, 'Connection Type', 'Remote / Internet'),
+                              const Divider(color: AppTheme.border, height: 20),
+                              _buildDetailsRow(Icons.gps_fixed, 'Background GPS', 'Active (Configured)'),
+                              const Divider(color: AppTheme.border, height: 20),
+                              _buildDetailsRow(Icons.timer_outlined, 'Session limit', '8 Hours Shift'),
                             ],
                           ),
                         ),
-                      ),
-                    ],
+
+                        if (isLocationOff) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.error.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.warning_amber_rounded, color: AppTheme.error),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Location tracking is turned off! Please enable GPS and allow location permissions for accurate WFH logging.',
+                                    style: GoogleFonts.inter(
+                                      color: AppTheme.error,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: state.isLoading ? null : () => _handlePunchAction(true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.home_work_rounded, size: 24, color: Colors.white),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'WFH Check-In',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
           
           const SizedBox(height: 12),
           Text(
