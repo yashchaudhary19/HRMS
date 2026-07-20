@@ -27,6 +27,7 @@ interface Employee {
   shift_name?: string;
   shift_schedule?: string;
   created_at: string;
+  password?: string;
 }
 
 interface AttendanceRecord {
@@ -529,7 +530,7 @@ export default function DashboardPage() {
     setEmployeeFormError("");
 
     try {
-      const payload = {
+      const payload: any = {
         first_name: selectedEmployee.first_name,
         last_name: selectedEmployee.last_name,
         email: selectedEmployee.email,
@@ -547,6 +548,10 @@ export default function DashboardPage() {
         wfh_leaves_entitled: selectedEmployee.wfh_leaves_entitled ?? 30,
         earned_leaves_entitled: selectedEmployee.earned_leaves_entitled ?? 12
       };
+
+      if (selectedEmployee.password) {
+        payload.password = selectedEmployee.password;
+      }
 
       await api.employees.update(selectedEmployee.id, payload);
       setShowEditEmployeeModal(false);
@@ -3630,6 +3635,18 @@ export default function DashboardPage() {
                   </select>
                 </div>
               )}
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase text-brand-muted mb-1">Change Password (Leave blank to keep current)</label>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Enter new password"
+                  value={selectedEmployee.password || ""}
+                  onChange={(e) => setSelectedEmployee(p => p ? ({ ...p, password: e.target.value }) : null)}
+                  className="w-full rounded-xl border border-brand-border bg-brand-sidebar/55 px-3.5 py-2.5 text-brand-text outline-none focus:border-brand-primary/60"
+                />
+              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
